@@ -1,0 +1,22 @@
+GowinSynthesis start
+Running parser ...
+ERROR (EX1997) : Cannot open VHDL file 'D:\Generic_SPI_module\vhdl\spi_sdio'
+Analyzing VHDL file 'D:\Generic_SPI_module\vhdl\tristate_pin.vhdl'
+Analyzing entity 'bidir'("D:\Generic_SPI_module\vhdl\tristate_pin.vhdl":6)
+Analyzing architecture 'maxpld'("D:\Generic_SPI_module\vhdl\tristate_pin.vhdl":16)
+Analyzing VHDL file 'D:\Generic_SPI_module\vhdl\spi_sclk_gen.vhdl'
+Analyzing entity 'spi_sclk_generator'("D:\Generic_SPI_module\vhdl\spi_sclk_gen.vhdl":4)
+Analyzing architecture 'rtl'("D:\Generic_SPI_module\vhdl\spi_sclk_gen.vhdl":21)
+Analyzing VHDL file 'D:\Generic_SPI_module\vhdl\spi_cs_gen.vhdl'
+Analyzing entity 'spi_cs_generator'("D:\Generic_SPI_module\vhdl\spi_cs_gen.vhdl":4)
+Analyzing architecture 'rtl'("D:\Generic_SPI_module\vhdl\spi_cs_gen.vhdl":17)
+Analyzing VHDL file 'D:\Generic_SPI_module\vhdl\spi_top.vhdl'
+WARN  (EX4760) : 'spi_sdio' is not compiled in library 'work'("D:\Generic_SPI_module\vhdl\spi_top.vhdl":6)
+Analyzing entity 'spi_top'("D:\Generic_SPI_module\vhdl\spi_top.vhdl":8)
+Analyzing architecture 'structural'("D:\Generic_SPI_module\vhdl\spi_top.vhdl":41)
+ERROR (EX4232) : Formal port 'i_data_width' has no actual or default value("D:\Generic_SPI_module\vhdl\spi_top.vhdl":106)
+'i_data_width' is declared here("D:\Generic_SPI_module\vhdl\spi_sclk_gen.vhdl":15)
+ERROR (EX4759) : 'spi_sdio' is not declared("D:\Generic_SPI_module\vhdl\spi_top.vhdl":111)
+ERROR (EX4716) : Unit 'structural' is ignored due to previous errors("D:\Generic_SPI_module\vhdl\spi_top.vhdl":152)
+VHDL file 'D:\Generic_SPI_module\vhdl\spi_top.vhdl' is ignored due to errors
+GowinSynthesis finish

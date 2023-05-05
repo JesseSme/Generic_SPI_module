@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE gowin-synthesis-project>
+<Project>
+    <Version>beta</Version>
+    <Device id="GW1NR-9" package="QFN88P" speed="6" partNumber="GW1NR-LV9QN88PC6/I5"/>
+    <FileList>
+        <File path="D:\Generic_SPI_module\vhdl\tristate_pin.vhdl" type="vhdl"/>
+        <File path="D:\Generic_SPI_module\vhdl\spi_sdio" type="vhdl"/>
+        <File path="D:\Generic_SPI_module\vhdl\spi_sclk_gen.vhdl" type="vhdl"/>
+        <File path="D:\Generic_SPI_module\vhdl\spi_cs_gen.vhdl" type="vhdl"/>
+        <File path="D:\Generic_SPI_module\vhdl\spi_top.vhdl" type="vhdl"/>
+    </FileList>
+    <OptionList>
+        <Option type="disable_insert_pad" value="0"/>
+        <Option type="dsp_balance" value="0"/>
+        <Option type="looplimit" value="2000"/>
+        <Option type="output_file" value="D:\Generic_SPI_module\impl\gwsynthesis\project.vg"/>
+        <Option type="print_all_synthesis_warning" value="0"/>
+        <Option type="ram_rw_check" value="1"/>
+        <Option type="top_module" value="spi_top"/>
+        <Option type="verilog_language" value="verilog-2001"/>
+        <Option type="vhdl_language" value="vhdl-2008"/>
+    </OptionList>
+</Project>
