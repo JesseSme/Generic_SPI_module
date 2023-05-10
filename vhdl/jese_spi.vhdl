@@ -14,24 +14,24 @@ entity jese_spi is
         i_CLK : in std_logic;
         i_RST : in std_logic;
         -- INCOMING DATA
-        i_REGISTER : inout std_logic_vector(g_REGISTER_DATA_WIDTH-1 downto 0);
+        i_REGISTER : in std_logic_vector(g_REGISTER_DATA_WIDTH-1 downto 0);
         -- SPI
         i_SDI : in std_logic;
         o_SDO : out std_logic;
         o_SCLK : out std_logic;
-        o_CS : out std_logic
+        o_CS : out std_logic;
         -- OUTGOING DATA
-        -- o_DONE : out std_logic;
-        -- o_REGISTER_1 : out std_logic_vector(g_REGISTER_DATA_WIDTH-1 downto 0);
-        -- o_REGISTER_2 : out std_logic_vector(g_REGISTER_DATA_WIDTH-1 downto 0);
+        --
+        o_SPI_DONE : out std_logic;
+        o_REGISTER : out std_logic_vector(g_BUFFER_WIDTH-1 downto 0)
     );
 end entity jese_spi;
 
 architecture rtl of jese_spi is
 
     -- Types
-    type t_SCLK_STATE is (s_IDLE, s_DO_SCLK, s_DONE, s_WAIT_CS);
-    signal s_SCLK_STATE : t_SCLK_STATE := s_IDLE;
+    type t_SPI_STATE is (s_IDLE, s_DO_SCLK, s_DONE, s_WAIT_ENABLE);
+    signal s_SPI_STATE : t_SPI_STATE := s_IDLE;
 
     -- Constants
     constant c_SCLK_CLK_CYCLES : integer := (g_CLK_FREQ/g_SCLK_FREQ);
@@ -47,10 +47,10 @@ architecture rtl of jese_spi is
 
     -- SPI data registers
     signal s_SPI_DONE : std_logic := '0';
-    signal s_ADDRESS : std_logic_vector(7 downto 0);
-    signal s_TX_BUFFER : std_logic_vector(g_BUFFER_WIDTH-1 downto 0);
-    signal s_RX_BUFFER : std_logic_vector(g_BUFFER_WIDTH-1 downto 0);
-    signal s_BYTES_TO_READ_UNSIGNED : unsigned(7 downto 0);
+    signal s_ADDRESS : std_logic_vector(7 downto 0) := (others => '0');
+    signal s_TX_BUFFER : std_logic_vector(g_BUFFER_WIDTH-1 downto 0) := (others => '0');
+    signal s_RX_BUFFER : std_logic_vector(g_BUFFER_WIDTH-1 downto 0) := (others => '0');
+    signal s_BYTES_TO_READ_UNSIGNED : unsigned(7 downto 0) := (others => '0');
 
     -- Helper registers
     signal s_EDGES_INT : integer := 0;
@@ -61,19 +61,8 @@ architecture rtl of jese_spi is
 
 begin
 
-    -- i_REGISTER mapping
-    i_REGISTER_MAP_proc : process(i_CLK, i_RST)
-    begin
-        if rising_edge(i_CLK) then
-            if s_CS = '1' then
-                s_ENABLE <= i_REGISTER(24);
-                s_TX_BUFFER(g_BUFFER_WIDTH-1 downto g_BUFFER_WIDTH-8) <= i_REGISTER(23 downto 16);
-                s_TX_BUFFER(g_BUFFER_WIDTH-1-8 downto g_BUFFER_WIDTH-(2*8)) <= i_REGISTER(15 downto 8);
-                s_BYTES_TO_READ_UNSIGNED <= unsigned(i_REGISTER(7 downto 0));
-            else
-            end if;
-        end if;
-    end process i_REGISTER_MAP_proc;
+    -- Start signal
+    s_ENABLE <= i_REGISTER(24);
 
     -- SPI signal mapping
     o_CS <= s_CS;
@@ -97,14 +86,18 @@ begin
 
     -- SCLK process
     SPI_proc : process(i_CLK, i_RST)
-        variable v_DATA_SHIFT_HELPER : std_logic_vector(7 downto 0);
-        variable v_DATA_INDEX : integer := 0;
+        -- variable v_DATA_SHIFT_HELPER : std_logic_vector(7 downto 0);
+        -- variable v_DATA_INDEX : integer := 0;
+        -- variable v_TX_BUFFER : std_logic_vector(g_BUFFER_WIDTH-1 downto 0) := (others => '0');
     begin
         if i_RST = '1' then
             s_SCLK <= '1';
+            s_SDO <= '1';
+            s_SPI_DONE <= '0';
             s_EDGES_INT <= 0;
+            s_EDGES_BOTTOM_INT <= 0;
         elsif rising_edge(i_CLK) then
-            case s_SCLK_STATE is
+            case s_SPI_STATE is
 
                 -- s_IDLE
                 when s_IDLE =>
@@ -119,14 +112,12 @@ begin
                         else
                             s_EDGES_BOTTOM_INT  <= (c_SCLK_EDGES_MAX-(to_integer(s_BYTES_TO_READ_UNSIGNED)*16+16));
                         end if;
-
-                        s_SCLK_STATE        <= s_DO_SCLK;
-
+                        s_TX_BUFFER(g_BUFFER_WIDTH-1 downto g_BUFFER_WIDTH-(2*8)) <= i_REGISTER(23 downto 16) & i_REGISTER(15 downto 8);
+                        s_BYTES_TO_READ_UNSIGNED <= unsigned(i_REGISTER(7 downto 0));
+                        s_SPI_STATE        <= s_DO_SCLK;
 
                     else -- s_CS
-
-                        s_SCLK_STATE <= s_IDLE;
-                    
+                        s_SPI_STATE <= s_IDLE;
                     end if; -- s_CS
                 -- s_IDLE
                 
@@ -150,15 +141,26 @@ begin
                             end if;
                         else
                             s_COUNTER_INT <= s_COUNTER_INT - 1;
-                            s_SCLK_STATE <= s_DO_SCLK;
+                            s_SPI_STATE <= s_DO_SCLK;
                         end if; -- s_COUNTER_INT
                     end if; -- s_EDGES_INT
                 -- s_DO_SCLK
 
-                when s_SPI_DONE =>
+                when s_DONE =>
+                    s_SPI_DONE <= '1';
+                    o_REGISTER <= s_RX_BUFFER;
+                    s_SPI_STATE <= s_WAIT_ENABLE;
+
+                when s_WAIT_ENABLE =>
+                    s_SPI_DONE <= '0';
+                    if s_ENABLE = '0' then
+                        s_SPI_STATE <= s_IDLE;
+                    else
+                        s_SPI_STATE <= s_WAIT_ENABLE;
+                    end if;
                     
                     
-            end case; -- s_SCLK_STATE
+            end case; -- s_SPI_STATE
         end if; -- i_RST
     end process SPI_proc;
 
