@@ -23,7 +23,8 @@ entity jese_spi is
         -- OUTGOING DATA
         --
         o_SPI_DONE : out std_logic;
-        o_REGISTER : out std_logic_vector(g_BUFFER_WIDTH-1 downto 0)
+        o_REGISTER1 : out std_logic_vector(g_REGISTER_DATA_WIDTH-1 downto 0);
+        o_REGISTER2 : out std_logic_vector(g_REGISTER_DATA_WIDTH-1 downto 0)
     );
 end entity jese_spi;
 
@@ -58,6 +59,7 @@ architecture rtl of jese_spi is
     signal s_COUNTER_INT : integer := 0;
     signal s_ADDRESS_COUNTER : integer := 0;
     signal s_DATA_COUNTER : integer := 0;
+    signal slv_reg12 : std_logic_vector(g_BUFFER_WIDTH-1 downto 0);
 
 begin
 
@@ -69,11 +71,19 @@ begin
     o_SCLK <= s_SCLK;
     o_SDO <= s_SDO;
     s_SDI <= i_SDI;
+--    o_CS <= i_REGISTER(24);
+--    o_SCLK <= i_REGISTER(16);
+--    o_SDO <= i_REGISTER(8);
+--    s_SDI <= i_SDI;
+    
+    o_REGISTER1 <= slv_reg12(63 downto 32);
+    o_REGISTER2 <= slv_reg12(31 downto 0);
 
-    -- Chip Select process
+
+--    -- Chip Select process
     CS_proc : process(i_CLK, i_RST)
     begin
-        if i_RST = '1' then
+        if i_RST = '0' then
             s_CS <= '1';
         elsif rising_edge(i_CLK) then
             if s_ENABLE = '1' then
@@ -90,7 +100,7 @@ begin
         -- variable v_DATA_INDEX : integer := 0;
         -- variable v_TX_BUFFER : std_logic_vector(g_BUFFER_WIDTH-1 downto 0) := (others => '0');
     begin
-        if i_RST = '1' then
+        if i_RST = '0' then
             s_SCLK <= '1';
             s_SDO <= '1';
             s_SPI_DONE <= '0';
@@ -124,7 +134,7 @@ begin
                 -- s_DO_SCLK
                 when s_DO_SCLK =>
                     if s_EDGES_INT = s_EDGES_BOTTOM_INT then
-                        -- go to next state
+                        s_SPI_STATE <= s_DONE;
                     else
                         if s_COUNTER_INT = 0 then
                             s_SCLK <= not s_SCLK;
@@ -148,7 +158,7 @@ begin
 
                 when s_DONE =>
                     s_SPI_DONE <= '1';
-                    o_REGISTER <= s_RX_BUFFER;
+                    slv_reg12 <= s_RX_BUFFER;
                     s_SPI_STATE <= s_WAIT_ENABLE;
 
                 when s_WAIT_ENABLE =>
